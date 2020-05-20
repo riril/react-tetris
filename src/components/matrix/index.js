@@ -1,12 +1,12 @@
-import React from 'react';
-import immutable, { List } from 'immutable';
-import classnames from 'classnames';
-import propTypes from 'prop-types';
+import React from "react";
+import immutable, { List } from "immutable";
+import classnames from "classnames";
+import propTypes from "prop-types";
 
-import style from './index.less';
-import { isClear } from '../../unit/';
-import { fillLine, blankLine } from '../../unit/const';
-import states from '../../control/states';
+import style from "./index.less";
+import { isClear, want } from "../../unit/";
+import { fillLine, blankLine } from "../../unit/const";
+import states from "../../control/states";
 
 const t = setTimeout;
 
@@ -34,20 +34,24 @@ export default class Matrix extends React.Component {
       this.over(nextProps);
     }
   }
-  shouldComponentUpdate(nextProps = {}) { // 使用Immutable 比较两个List 是否相等
+  shouldComponentUpdate(nextProps = {}) {
+    // 使用Immutable 比较两个List 是否相等
     const props = this.props;
-    return !(
-      immutable.is(nextProps.matrix, props.matrix) &&
-      immutable.is(
-        (nextProps.cur && nextProps.cur.shape),
-        (props.cur && props.cur.shape)
-      ) &&
-      immutable.is(
-        (nextProps.cur && nextProps.cur.xy),
-        (props.cur && props.cur.xy)
-      )
-    ) || this.state.clearLines
-    || this.state.isOver;
+    return (
+      !(
+        immutable.is(nextProps.matrix, props.matrix) &&
+        immutable.is(
+          nextProps.cur && nextProps.cur.shape,
+          props.cur && props.cur.shape
+        ) &&
+        immutable.is(
+          nextProps.cur && nextProps.cur.xy,
+          props.cur && props.cur.xy
+        )
+      ) ||
+      this.state.clearLines ||
+      this.state.isOver
+    );
   }
   getResult(props = this.props) {
     const cur = props.cur;
@@ -59,26 +63,50 @@ export default class Matrix extends React.Component {
     if (clearLines) {
       const animateColor = this.state.animateColor;
       clearLines.forEach((index) => {
-        matrix = matrix.set(index, List([
-          animateColor,
-          animateColor,
-          animateColor,
-          animateColor,
-          animateColor,
-          animateColor,
-          animateColor,
-          animateColor,
-          animateColor,
-          animateColor,
-        ]));
+        matrix = matrix.set(
+          index,
+          List([
+            animateColor,
+            animateColor,
+            animateColor,
+            animateColor,
+            animateColor,
+            animateColor,
+            animateColor,
+            animateColor,
+            animateColor,
+            animateColor,
+          ])
+        );
       });
     } else if (shape) {
-      shape.forEach((m, k1) => (
+      let index = 0;
+      let bottom = cur.fall(index);
+      while (want(bottom, matrix)) {
+        bottom = cur.fall(index);
+        index++;
+      }
+      bottom = cur.fall(index - 2);
+      const hintShape = bottom.shape;
+      const hintXy = bottom.xy;
+      hintShape.forEach((m, k1) =>
         m.forEach((n, k2) => {
-          if (n && xy.get(0) + k1 >= 0) { // 竖坐标可以为负
+          if (n && hintXy[0] + k1 >= 0) {
+            // 竖坐标可以为负
+            let line = matrix.get(hintXy[0] + k1);
+            line = line.set(hintXy[1] + k2, 3);
+            matrix = matrix.set(hintXy[0] + k1, line);
+          }
+        })
+      );
+      shape.forEach((m, k1) =>
+        m.forEach((n, k2) => {
+          if (n && xy.get(0) + k1 >= 0) {
+            // 竖坐标可以为负
             let line = matrix.get(xy.get(0) + k1);
             let color;
-            if (line.get(xy.get(1) + k2) === 1 && !clearLines) { // 矩阵与方块重合
+            if (line.get(xy.get(1) + k2) === 1 && !clearLines) {
+              // 矩阵与方块重合
               color = 2;
             } else {
               color = 1;
@@ -87,8 +115,9 @@ export default class Matrix extends React.Component {
             matrix = matrix.set(xy.get(0) + k1, line);
           }
         })
-      ));
+      );
     }
+
     return matrix;
   }
   clearAnimate() {
@@ -101,7 +130,7 @@ export default class Matrix extends React.Component {
           this.setState({
             animateColor: 2,
           });
-          if (typeof callback === 'function') {
+          if (typeof callback === "function") {
             callback();
           }
         }, 100);
@@ -149,19 +178,21 @@ export default class Matrix extends React.Component {
       matrix = this.getResult();
     }
     return (
-      <div className={style.matrix}>{
-          matrix.map((p, k1) => (<p key={k1}>
-            {
-              p.map((e, k2) => <b
+      <div className={style.matrix}>
+        {matrix.map((p, k1) => (
+          <p key={k1}>
+            {p.map((e, k2) => (
+              <b
                 className={classnames({
                   c: e === 1,
                   d: e === 2,
+                  e: e === 3,
                 })}
                 key={k2}
-              />)
-            }
-          </p>))
-      }
+              />
+            ))}
+          </p>
+        ))}
       </div>
     );
   }

@@ -1,5 +1,5 @@
-import { List } from 'immutable';
-import { blockShape, origin } from './const';
+import { List } from "immutable";
+import { blockShape, origin } from "./const";
 
 class Block {
   constructor(option) {
@@ -17,33 +17,34 @@ class Block {
       this.timeStamp = option.timeStamp;
     }
 
-    if (!option.shape) { // init
-      this.shape = List(blockShape[option.type].map(e => List(e)));
+    if (!option.shape) {
+      // init
+      this.shape = List(blockShape[option.type].map((e) => List(e)));
     } else {
       this.shape = option.shape;
     }
     if (!option.xy) {
       switch (option.type) {
-        case 'I': // I
+        case "I": // I
           this.xy = List([0, 3]);
           break;
-        case 'L': // L
-          this.xy = List([-1, 4]);
+        case "L": // L
+          this.xy = List([0, 5]);
           break;
-        case 'J': // J
-          this.xy = List([-1, 4]);
+        case "J": // J
+          this.xy = List([0, 5]);
           break;
-        case 'Z': // Z
-          this.xy = List([-1, 4]);
+        case "Z": // Z
+          this.xy = List([0, 5]);
           break;
-        case 'S': // S
-          this.xy = List([-1, 4]);
+        case "S": // S
+          this.xy = List([0, 5]);
           break;
-        case 'O': // O
-          this.xy = List([-1, 4]);
+        case "O": // O
+          this.xy = List([0, 5]);
           break;
-        case 'T': // T
-          this.xy = List([-1, 4]);
+        case "T": // T
+          this.xy = List([0, 5]);
           break;
         default:
           break;
@@ -55,20 +56,24 @@ class Block {
   rotate() {
     const shape = this.shape;
     let result = List([]);
-    shape.forEach(m => m.forEach((n, k) => {
-      const index = m.size - k - 1;
-      if (result.get(index) === undefined) {
-        result = result.set(index, List([]));
-      }
-      const tempK = result.get(index).push(n);
-      result = result.set(index, tempK);
-    }));
+    shape.forEach((m) =>
+      m.forEach((n, k) => {
+        const index = m.size - k - 1;
+        if (result.get(index) === undefined) {
+          result = result.set(index, List([]));
+        }
+        const tempK = result.get(index).push(n);
+        result = result.set(index, tempK);
+      })
+    );
     const nextXy = [
       this.xy.get(0) + origin[this.type][this.rotateIndex][0],
       this.xy.get(1) + origin[this.type][this.rotateIndex][1],
     ];
-    const nextRotateIndex = this.rotateIndex + 1 >= origin[this.type].length ?
-      0 : this.rotateIndex + 1;
+    const nextRotateIndex =
+      this.rotateIndex + 1 >= origin[this.type].length
+        ? 0
+        : this.rotateIndex + 1;
     return {
       shape: result,
       type: this.type,
